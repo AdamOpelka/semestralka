@@ -23,20 +23,22 @@
             </div>
         </div>
         
-        <!-- Formulář s datumem a dynamickým našeptávačem zemí -->
-        <div class="bg-white p-6 rounded shadow grid grid-cols-1 md:grid-cols-5 gap-4">
-            <input id="t_name" class="border p-2 rounded" placeholder="Název zájezdu">
-            <input id="t_desc" class="border p-2 rounded" placeholder="Krátký popis">
-            <input id="t_price" type="number" class="border p-2 rounded" placeholder="Cena (Kč)">
-            <input id="t_date" type="date" class="border p-2 rounded" placeholder="Termín">
-            <input list="countries" id="t_country" class="border p-2 rounded" placeholder="Země">
-            <datalist id="countries"></datalist>
-            <button onclick="createTour()" class="bg-green-600 text-white p-2 rounded md:col-span-5 hover:bg-green-700">Přidat zájezd</button>
+        <div class="bg-white p-6 rounded shadow grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            <div class="md:col-span-2"><label class="text-xs text-gray-500">Název</label><input id="t_name" class="w-full border p-2 rounded"></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500">Popis</label><input id="t_desc" class="w-full border p-2 rounded"></div>
+            <div><label class="text-xs text-gray-500">Cena (Kč)</label><input id="t_price" type="number" class="w-full border p-2 rounded"></div>
+            <div><label class="text-xs text-gray-500">Země</label><input list="countries" id="t_country" class="w-full border p-2 rounded"><datalist id="countries"></datalist></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500">Od (Odjezd)</label><input id="t_startDate" type="date" class="w-full border p-2 rounded"></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500">Do (Příjezd)</label><input id="t_endDate" type="date" class="w-full border p-2 rounded"></div>
+            <div class="md:col-span-2 flex gap-2">
+                <button id="submitBtn" onclick="saveTour()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">Přidat zájezd</button>
+                <button id="cancelEditBtn" onclick="cancelEdit()" class="hidden w-1/3 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Zrušit</button>
+            </div>
         </div>
 
         <div class="bg-white p-6 rounded shadow overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="border-b bg-gray-50"><tr><th class="p-2">Název</th><th>Země</th><th>Termín</th><th>Cena</th><th>Akce</th></tr></thead>
+                <thead class="border-b bg-gray-50"><tr><th class="p-2">Název</th><th>Země</th><th>Od - Do</th><th>Cena</th><th>Akce</th></tr></thead>
                 <tbody id="table"></tbody>
             </table>
         </div>
@@ -49,8 +51,9 @@
 
     <script>
         let chartCountInstance = null, chartValueInstance = null;
+        let cachedTours = [];
+        let editingId = null;
 
-        // Stažení všech zemí z veřejného API a vytvoření našeptávače
         async function loadCountries() {
             const res = await fetch('https://restcountries.com/v3.1/all?fields=translations');
             const data = await res.json();
@@ -61,27 +64,20 @@
 
         async function login() {
             const pwd = document.getElementById('pwd').value;
-            const res = await fetch('/api/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pwd })
-            });
+            const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwd }) });
             if(res.ok) {
                 document.getElementById('login').classList.add('hidden');
                 document.getElementById('admin').classList.remove('hidden');
                 loadData();
-            } else {
-                alert('Nesprávné heslo');
-            }
+            } else { alert('Nesprávné heslo'); }
         }
 
-        function toggleCharts() {
-            document.getElementById('chartsContainer').classList.toggle('hidden');
-        }
+        function toggleCharts() { document.getElementById('chartsContainer').classList.toggle('hidden'); }
 
         async function loadData() {
             const [toursRes, resRes] = await Promise.all([fetch('/api/tours'), fetch('/api/reservations')]);
-            renderTable(await toursRes.json());
+            cachedTours = await toursRes.json();
+            renderTable(cachedTours);
             renderCharts(await resRes.json());
         }
 
@@ -90,29 +86,62 @@
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-2">${t.name}</td>
                     <td>${t.country}</td>
-                    <td>${t.date}</td>
+                    <td>${t.startDate} - ${t.endDate}</td>
                     <td>${t.price} Kč</td>
-                    <td><button onclick="delTour('${t.id}')" class="text-red-600 font-bold hover:underline">Smazat</button></td>
+                    <td class="space-x-2">
+                        <button onclick="editTour('${t.id}')" class="text-blue-600 font-bold hover:underline">Upravit</button>
+                        <button onclick="delTour('${t.id}')" class="text-red-600 font-bold hover:underline">Smazat</button>
+                    </td>
                 </tr>`).join('');
         }
 
-        async function createTour() {
+        async function saveTour() {
             const data = {
                 name: document.getElementById('t_name').value,
                 description: document.getElementById('t_desc').value,
                 price: document.getElementById('t_price').value,
-                date: document.getElementById('t_date').value,
+                startDate: document.getElementById('t_startDate').value,
+                endDate: document.getElementById('t_endDate').value,
                 country: document.getElementById('t_country').value
             };
-            if(!data.name || !data.date || !data.country) return alert('Vyplňte název, datum a zemi.');
-            await fetch('/api/tours', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            ['t_name', 't_desc', 't_price', 't_date', 't_country'].forEach(id => document.getElementById(id).value = '');
+            if(!data.name || !data.startDate || !data.endDate || !data.country) return alert('Vyplňte název, obě data a zemi.');
+            
+            if (editingId) {
+                await fetch('/api/tours', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id: editingId, ...data}) });
+            } else {
+                await fetch('/api/tours', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            }
+            cancelEdit();
             loadData();
         }
 
+        function editTour(id) {
+            const tour = cachedTours.find(t => t.id === id);
+            if(!tour) return;
+            document.getElementById('t_name').value = tour.name || '';
+            document.getElementById('t_desc').value = tour.description || '';
+            document.getElementById('t_price').value = tour.price || '';
+            document.getElementById('t_startDate').value = tour.startDate || '';
+            document.getElementById('t_endDate').value = tour.endDate || '';
+            document.getElementById('t_country').value = tour.country || '';
+            
+            editingId = id;
+            document.getElementById('submitBtn').innerText = 'Uložit změny';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            ['t_name', 't_desc', 't_price', 't_startDate', 't_endDate', 't_country'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('submitBtn').innerText = 'Přidat zájezd';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
         async function delTour(id) {
-            await fetch(`/api/tours?id=${id}`, { method: 'DELETE' });
-            loadData();
+            if(confirm('Opravdu smazat?')) {
+                await fetch(`/api/tours?id=${id}`, { method: 'DELETE' });
+                loadData();
+            }
         }
 
         function renderCharts(reservations) {
