@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head><meta charset="UTF-8"><title>Klientská část</title></head>
+<body>
+    <h1>Data pro klienty (Read)</h1>
+    <ul id="list"></ul>
+    <a href="/admin.html">Administrace</a>
+    <script>
+        async function load() {
+            const res = await fetch('/api/items');
+            const data = await res.json();
+            document.getElementById('list').innerHTML = data.map(i => `<li>${i.name}</li>`).join('');
+        }
+        load();
+    </script>
+</body>
+</html>
