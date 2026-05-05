@@ -5,27 +5,37 @@
     <title>Cestovní kancelář</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-blue-800 p-4 text-white flex justify-between items-center">
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <nav class="bg-blue-800 p-4 text-white flex justify-between items-center z-10 shadow-md">
         <h1 class="text-xl font-bold">Naše Zájezdy</h1>
         <a href="/admin.html" class="hover:underline">Administrace</a>
     </nav>
-    <main class="container mx-auto mt-8 p-4">
-        <div id="tours" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-    </main>
+    
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Levý banner (viditelný na větších obrazovkách) -->
+        <div class="hidden lg:block w-1/6 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e');"></div>
+        
+        <!-- Hlavní obsah -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div id="tours" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        </main>
+
+        <!-- Pravý banner -->
+        <div class="hidden lg:block w-1/6 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2');"></div>
+    </div>
 
     <!-- Rezervační modal -->
-    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 class="text-xl font-bold mb-4">Rezervace zájezdu</h2>
             <input type="hidden" id="r_tourName"><input type="hidden" id="r_country"><input type="hidden" id="r_price">
             <input id="r_fname" class="w-full border p-2 mb-2 rounded" placeholder="Jméno">
             <input id="r_lname" class="w-full border p-2 mb-2 rounded" placeholder="Příjmení">
             <input id="r_email" type="email" class="w-full border p-2 mb-2 rounded" placeholder="E-mail">
-            <input id="r_phone" class="w-full border p-2 mb-4 rounded" placeholder="Telefon">
+            <input id="r_phone" type="tel" class="w-full border p-2 mb-4 rounded" placeholder="+420 123 456 789">
             <div class="flex justify-end gap-2">
-                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded">Zrušit</button>
-                <button onclick="submitReservation()" class="px-4 py-2 bg-blue-600 text-white rounded">Potvrdit</button>
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Zrušit</button>
+                <button onclick="submitReservation()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Potvrdit</button>
             </div>
         </div>
     </div>
@@ -37,7 +47,7 @@
             document.getElementById('tours').innerHTML = data.map(t => `
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-600">
                     <h3 class="text-xl font-bold">${t.name}</h3>
-                    <p class="text-sm text-gray-500 font-semibold mb-2">${t.country}</p>
+                    <p class="text-sm text-gray-500 font-semibold mb-2">${t.country} | 📅 ${t.date}</p>
                     <p class="text-gray-700 mb-4 h-16 overflow-hidden">${t.description}</p>
                     <div class="flex justify-between items-center mt-4">
                         <span class="text-lg font-bold text-blue-800">${t.price} Kč</span>
@@ -54,9 +64,7 @@
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
         async function submitReservation() {
             const resData = {
