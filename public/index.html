@@ -16,10 +16,9 @@
     <div class="flex flex-1 overflow-hidden">
         <div class="hidden lg:block w-1/6 bg-cover bg-center shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e');"></div>
         
-        <main class="flex-1 p-8 overflow-y-auto bg-gray-100">
+        <main class="flex-1 p-8 overflow-y-scroll bg-gray-100">
             <h2 class="text-4xl font-extrabold text-center text-blue-900 mt-6 mb-8 tracking-wide uppercase drop-shadow-sm">Naše aktuální zájezdy</h2>
             
-            <!-- Panel filtrů -->
             <div class="bg-white p-6 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Destinace</label>
@@ -27,7 +26,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Max cena: <span id="price_val" class="text-blue-600"></span></label>
-                    <input type="range" id="f_price" min="0" value="0" oninput="updatePriceLabel(); filterTours()" class="w-full cursor-pointer">
+                    <input type="range" id="f_price" min="0" value="0" oninput="updatePriceLabel()" onchange="filterTours()" class="w-full cursor-pointer">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Termín od</label>
@@ -45,7 +44,6 @@
         <div class="hidden lg:block w-1/6 bg-cover bg-center shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2');"></div>
     </div>
 
-    <!-- Rezervační modal -->
     <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Rezervace zájezdu</h2>
@@ -77,11 +75,9 @@
             const res = await fetch('/api/tours');
             allTours = await res.json();
             
-            // Naplnění filtru destinací
             const dests = [...new Set(allTours.map(t => t.country))].filter(Boolean).sort();
             document.getElementById('f_country').innerHTML = '<option value="">Všechny destinace</option>' + dests.map(d => `<option value="${d}">${d}</option>`).join('');
             
-            // Nastavení maximální ceny pro posuvník
             const maxPrice = allTours.length ? Math.max(...allTours.map(t => Number(t.price) || 0)) : 10000;
             const priceInput = document.getElementById('f_price');
             priceInput.max = maxPrice;
