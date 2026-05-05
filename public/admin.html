@@ -200,17 +200,32 @@
                 dataMap[r.country].count += 1;
                 dataMap[r.country].value += Number(r.price);
             });
-            const labels = Object.keys(dataMap);
+
+            // Agregace pro vysoký počet destinací
+            let sortedData = Object.entries(dataMap).map(([country, data]) => ({ country, ...data })).sort((a, b) => b.count - a.count);
+            const MAX_SLICES = 7;
+            let finalData = sortedData.slice(0, MAX_SLICES);
+            const others = sortedData.slice(MAX_SLICES);
+
+            if (others.length > 0) {
+                const othersSum = others.reduce((acc, curr) => ({ count: acc.count + curr.count, value: acc.value + curr.value }), { count: 0, value: 0 });
+                finalData.push({ country: 'Ostatní', count: othersSum.count, value: othersSum.value });
+            }
+
+            const labels = finalData.map(d => d.country);
+            const counts = finalData.map(d => d.count);
+            const values = finalData.map(d => d.value);
+
             if(chartCountInstance) chartCountInstance.destroy();
             if(chartValueInstance) chartValueInstance.destroy();
 
             chartCountInstance = new Chart(document.getElementById('chartCount'), {
-                type: 'pie', data: { labels, datasets: [{ label: 'Počet rezervací', data: labels.map(l => dataMap[l].count) }] },
-                options: { plugins: { title: { display: true, text: 'Oblíbenost destinací' } } }
+                type: 'pie', data: { labels, datasets: [{ label: 'Počet rezervací', data: counts }] },
+                options: { plugins: { title: { display: true, text: 'Oblíbenost destinací (Top 7 + Ostatní)' } } }
             });
             chartValueInstance = new Chart(document.getElementById('chartValue'), {
-                type: 'bar', data: { labels, datasets: [{ label: 'Tržby (Kč)', data: labels.map(l => dataMap[l].value), backgroundColor: '#2563eb' }] },
-                options: { plugins: { title: { display: true, text: 'Tržby podle destinací' } } }
+                type: 'bar', data: { labels, datasets: [{ label: 'Tržby (Kč)', data: values, backgroundColor: '#2563eb' }] },
+                options: { plugins: { title: { display: true, text: 'Tržby podle destinací (Top 7 + Ostatní)' } } }
             });
         }
     </script>

@@ -17,7 +17,28 @@
         <div class="hidden lg:block w-1/6 bg-cover bg-center shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e');"></div>
         
         <main class="flex-1 p-8 overflow-y-auto bg-gray-100">
-            <h2 class="text-4xl font-extrabold text-center text-blue-900 mt-6 mb-12 tracking-wide uppercase drop-shadow-sm">Naše aktuální zájezdy</h2>
+            <h2 class="text-4xl font-extrabold text-center text-blue-900 mt-6 mb-8 tracking-wide uppercase drop-shadow-sm">Naše aktuální zájezdy</h2>
+            
+            <!-- Panel filtrů -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Destinace</label>
+                    <select id="f_country" onchange="filterTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Max cena: <span id="price_val" class="text-blue-600"></span></label>
+                    <input type="range" id="f_price" min="0" value="0" oninput="updatePriceLabel(); filterTours()" class="w-full cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Termín od</label>
+                    <input type="date" id="f_dateFrom" onchange="filterTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Termín do</label>
+                    <input type="date" id="f_dateTo" onchange="filterTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500">
+                </div>
+            </div>
+
             <div id="tours" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
         </main>
 
@@ -41,16 +62,59 @@
     </div>
 
     <script>
+        let allTours = [];
+
         const formatDate = (dateStr) => {
             if (!dateStr) return '';
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('cs-CZ');
+            return new Date(dateStr).toLocaleDateString('cs-CZ');
         };
+
+        function updatePriceLabel() {
+            document.getElementById('price_val').innerText = document.getElementById('f_price').value + ' Kč';
+        }
 
         async function load() {
             const res = await fetch('/api/tours');
-            const data = await res.json();
-            document.getElementById('tours').innerHTML = data.map(t => `
+            allTours = await res.json();
+            
+            // Naplnění filtru destinací
+            const dests = [...new Set(allTours.map(t => t.country))].filter(Boolean).sort();
+            document.getElementById('f_country').innerHTML = '<option value="">Všechny destinace</option>' + dests.map(d => `<option value="${d}">${d}</option>`).join('');
+            
+            // Nastavení maximální ceny pro posuvník
+            const maxPrice = allTours.length ? Math.max(...allTours.map(t => Number(t.price) || 0)) : 10000;
+            const priceInput = document.getElementById('f_price');
+            priceInput.max = maxPrice;
+            priceInput.value = maxPrice;
+            updatePriceLabel();
+
+            renderTours(allTours);
+        }
+
+        function filterTours() {
+            const fCountry = document.getElementById('f_country').value;
+            const fPrice = Number(document.getElementById('f_price').value);
+            const fDateFrom = document.getElementById('f_dateFrom').value;
+            const fDateTo = document.getElementById('f_dateTo').value;
+
+            const filtered = allTours.filter(t => {
+                let valid = true;
+                if (fCountry && t.country !== fCountry) valid = false;
+                if (t.price > fPrice) valid = false;
+                if (fDateFrom && t.startDate < fDateFrom) valid = false;
+                if (fDateTo && t.endDate > fDateTo) valid = false;
+                return valid;
+            });
+            renderTours(filtered);
+        }
+
+        function renderTours(data) {
+            const container = document.getElementById('tours');
+            if(data.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 col-span-full text-center py-10">Zadaným kritériím neodpovídá žádný zájezd.</p>';
+                return;
+            }
+            container.innerHTML = data.map(t => `
                 <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition overflow-hidden border border-gray-100 flex flex-col">
                     ${t.image ? `<img src="${t.image}" class="w-full h-48 object-cover">` : `<div class="w-full h-48 bg-blue-100 flex items-center justify-center text-blue-300"><span class="text-4xl">✈️</span></div>`}
                     <div class="p-6 flex flex-col flex-1">
@@ -88,15 +152,17 @@
                 date: new Date().toISOString()
             };
             
-            if(!resData.firstName || !resData.lastName) return alert('Vyplňte jméno a příjmení.');
+            if(!resData.firstName || !resData.lastName || !resData.email || !resData.phone) {
+                return alert('Vyplňte všechny rezervační údaje.');
+            }
             
             await fetch('/api/reservations', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(resData) });
             alert('Rezervace úspěšná!');
             
-            // Vymazání formuláře
             ['r_fname', 'r_lname', 'r_email', 'r_phone'].forEach(id => document.getElementById(id).value = '');
             closeModal();
         }
+
         load();
     </script>
 </body>
