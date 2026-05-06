@@ -19,13 +19,13 @@
     <div id="admin" class="hidden max-w-7xl mx-auto space-y-8">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-lg border-l-8 border-blue-500">
             <div class="flex gap-4">
-                <button onclick="switchView('tours')" class="text-xl font-bold text-gray-800 hover:text-blue-600 transition">Destinace</button>
-                <button onclick="switchView('reservations')" class="text-xl font-bold text-gray-800 hover:text-blue-600 transition">Rezervace</button>
+                <button id="nav-tours" onclick="switchView('tours')" class="text-xl font-bold transition text-blue-600 underline underline-offset-4 decoration-2">Destinace</button>
+                <button id="nav-reservations" onclick="switchView('reservations')" class="text-xl font-bold text-gray-800 hover:text-blue-600 transition">Rezervace</button>
             </div>
             <div class="space-x-3">
                 <button onclick="exportCSV()" class="bg-green-600 text-white font-semibold px-5 py-2 rounded hover:bg-green-700 shadow transition">⬇ CSV Rezervace</button>
-                <button onclick="toggleCharts()" class="bg-purple-600 text-white font-semibold px-5 py-2 rounded hover:bg-purple-700 shadow transition">📊 Grafy</button>
-                <button onclick="window.location.reload()" class="bg-red-600 text-white font-semibold px-5 py-2 rounded hover:bg-red-700 shadow transition">🚪 Odhlásit</button>
+                <button onclick="toggleCharts()" class="bg-purple-600 text-white font-semibold px-5 py-2 rounded hover:bg-purple-700 shadow transition">Grafy</button>
+                <button onclick="window.location.reload()" class="bg-red-600 text-white font-semibold px-5 py-2 rounded hover:bg-red-700 shadow transition">Odhlásit</button>
             </div>
         </div>
         
@@ -92,13 +92,24 @@
             return new Date(dateStr).toLocaleDateString('cs-CZ');
         };
 
+        // Změna: Funkce nyní dynamicky přiřazuje styly aktivnímu/neaktivnímu tlačítku
         function switchView(view) {
+            const btnTours = document.getElementById('nav-tours');
+            const btnReservations = document.getElementById('nav-reservations');
+            
+            const activeClass = "text-xl font-bold transition text-blue-600 underline underline-offset-4 decoration-2";
+            const inactiveClass = "text-xl font-bold text-gray-800 hover:text-blue-600 transition";
+
             if(view === 'tours') {
                 document.getElementById('view-tours').classList.remove('hidden');
                 document.getElementById('view-reservations').classList.add('hidden');
+                btnTours.className = activeClass;
+                btnReservations.className = inactiveClass;
             } else {
                 document.getElementById('view-tours').classList.add('hidden');
                 document.getElementById('view-reservations').classList.remove('hidden');
+                btnTours.className = inactiveClass;
+                btnReservations.className = activeClass;
                 renderReservationsTable();
             }
         }
@@ -143,6 +154,23 @@
 
             renderTable(cachedTours);
             renderCharts(cachedReservations);
+        }
+
+        function filterAdminTours() {
+            const fCountry = document.getElementById('f_admin_country').value;
+            const fPrice = Number(document.getElementById('f_admin_price').value);
+            const fDateFrom = document.getElementById('f_admin_dateFrom').value;
+            const fDateTo = document.getElementById('f_admin_dateTo').value;
+
+            const filtered = cachedTours.filter(t => {
+                let valid = true;
+                if (fCountry && t.country !== fCountry) valid = false;
+                if (t.price > fPrice) valid = false;
+                if (fDateFrom && t.startDate < fDateFrom) valid = false;
+                if (fDateTo && t.endDate > fDateTo) valid = false;
+                return valid;
+            });
+            renderTable(filtered);
         }
 
         function renderTable(tours) {
