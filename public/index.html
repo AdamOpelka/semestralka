@@ -7,7 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Poppins', sans-serif; }</style>
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen">
+<!-- Změna: h-screen a overflow-hidden uzamkne stránku -->
+<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
     <nav class="bg-blue-900 p-4 text-white flex justify-between items-center z-10 shadow-lg">
         <h1 class="text-2xl font-bold tracking-wider">Naše CK</h1>
         <a href="/admin.html" class="bg-blue-700 px-4 py-2 rounded hover:bg-blue-600 transition">Administrace</a>
@@ -16,7 +17,8 @@
     <div class="flex flex-1 overflow-hidden">
         <div class="hidden lg:block w-1/6 bg-cover bg-center shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e');"></div>
         
-        <main class="flex-1 p-8 overflow-y-scroll bg-gray-100">
+        <!-- Změna: overflow-y-auto zajistí scrollování jen zde -->
+        <main class="flex-1 p-8 overflow-y-auto bg-gray-100">
             <h2 class="text-4xl font-extrabold text-center text-blue-900 mt-6 mb-8 tracking-wide uppercase drop-shadow-sm">Naše aktuální zájezdy</h2>
             
             <div class="bg-white p-6 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -26,7 +28,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Max cena: <span id="price_val" class="text-blue-600"></span></label>
-                    <input type="range" id="f_price" min="0" value="0" oninput="updatePriceLabel()" onchange="filterTours()" class="w-full cursor-pointer">
+                    <!-- Změna: touch-none zamezí konfliktům s gesty na mobilu -->
+                    <input type="range" id="f_price" min="0" value="0" oninput="updatePriceLabel()" onchange="filterTours()" class="w-full cursor-pointer touch-none">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Termín od</label>

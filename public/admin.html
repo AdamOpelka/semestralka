@@ -44,7 +44,7 @@
 
         <div class="bg-white p-6 rounded-xl shadow-xl mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div><label class="block text-sm font-semibold text-gray-600 mb-1">Destinace</label><select id="f_admin_country" onchange="filterAdminTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500"></select></div>
-            <div><label class="block text-sm font-semibold text-gray-600 mb-1">Max cena: <span id="admin_price_val" class="text-blue-600"></span></label><input type="range" id="f_admin_price" min="0" value="0" oninput="updateAdminPriceLabel()" onchange="filterAdminTours()" class="w-full cursor-pointer"></div>
+            <div><label class="block text-sm font-semibold text-gray-600 mb-1">Max cena: <span id="admin_price_val" class="text-blue-600"></span></label><input type="range" id="f_admin_price" min="0" value="0" oninput="updateAdminPriceLabel()" onchange="filterAdminTours()" class="w-full cursor-pointer touch-none"></div>
             <div><label class="block text-sm font-semibold text-gray-600 mb-1">Termín od</label><input type="date" id="f_admin_dateFrom" onchange="filterAdminTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500"></div>
             <div><label class="block text-sm font-semibold text-gray-600 mb-1">Termín do</label><input type="date" id="f_admin_dateTo" onchange="filterAdminTours()" class="w-full border-2 p-2 rounded outline-none focus:border-blue-500"></div>
         </div>
